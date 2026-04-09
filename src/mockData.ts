@@ -156,8 +156,8 @@ export function computeFunnel(orders: Order[]): FunnelData[] {
   const noDealAmount = noDealOrders.reduce((s, o) => s + o.orderAmount, 0);
 
   return [
-    { stage: '新接觸', count: uniqueCompanies.size, amount: allAmount },
     { stage: '已報價', count: quoted.size + deal.size, amount: quotedAmountSum + dealAmount },
+    { stage: '新接觸', count: uniqueCompanies.size, amount: allAmount },
     { stage: '跟進中', count: signing.size + deal.size, amount: signingAmount + dealAmount },
     { stage: '成交', count: deal.size, amount: dealAmount },
     { stage: '未採購', count: noDeal.size, amount: noDealAmount },

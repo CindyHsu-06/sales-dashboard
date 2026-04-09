@@ -103,7 +103,7 @@ export default function App() {
       funnel = allFunnels[0];
     } else {
       // Aggregate funnel counts
-      const stages = ['新接觸', '已報價', '跟進中', '成交', '未採購'] as const;
+      const stages = ['已報價', '新接觸', '跟進中', '成交', '未採購'] as const;
       funnel = stages.map((stage) => ({
         stage,
         count: allFunnels.reduce((sum, f) => sum + (f.find((d) => d.stage === stage)?.count ?? 0), 0),

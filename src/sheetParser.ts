@@ -224,8 +224,8 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
 
   // Build funnel from sheet data
   const funnel: FunnelData[] = [
-    { stage: '新接觸', count: newContacts, amount: allAmount },
     { stage: '已報價', count: quotedCount, amount: allAmount },
+    { stage: '新接觸', count: newContacts, amount: allAmount },
     { stage: '跟進中', count: followingUp, amount: followingAmount },
     { stage: '成交', count: closedCount, amount: closedAmount },
     { stage: '未採購', count: notPurchased, amount: notPurchasedAmount },
