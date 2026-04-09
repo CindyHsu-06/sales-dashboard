@@ -1,4 +1,4 @@
-export type OrderStatus = '已報價' | '已簽核' | '已入帳' | '未入帳';
+export type OrderStatus = '已報價' | '已簽核' | '跟進中' | '未採購' | '已入帳' | '未入帳';
 
 export type FollowUpStatus = '待跟進' | '跟進中' | '已回覆' | '待結案';
 

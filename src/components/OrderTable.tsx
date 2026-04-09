@@ -6,16 +6,19 @@ interface OrderTableProps {
 }
 
 const tabs: { label: string; filter: (o: Order) => boolean }[] = [
-  { label: '已報價', filter: (o) => o.status === '已報價' || o.status === '已簽核' },
+  { label: '全部', filter: () => true },
+  { label: '跟進中', filter: (o) => o.status === '已報價' || o.status === '已簽核' || o.status === '跟進中' },
   { label: '已成交', filter: (o) => o.status === '已入帳' || o.status === '未入帳' },
   { label: '已入帳', filter: (o) => o.status === '已入帳' },
   { label: '未入帳追蹤', filter: (o) => o.status === '未入帳' },
-  { label: '未採購', filter: (o) => o.status === '已報價' },
+  { label: '未採購', filter: (o) => o.status === '未採購' },
 ];
 
 const statusBadge: Record<OrderStatus, string> = {
   '已報價': 'bg-blue-100 text-blue-700',
   '已簽核': 'bg-cyan-100 text-cyan-700',
+  '跟進中': 'bg-amber-100 text-amber-700',
+  '未採購': 'bg-slate-100 text-slate-600',
   '已入帳': 'bg-emerald-100 text-emerald-700',
   '未入帳': 'bg-red-100 text-red-700',
 };

@@ -145,6 +145,8 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
       const grossMargin = parsePercent(row[5]);
       const note = row[6]?.trim() || '';
 
+      // Determine initial status from 備註
+      const isNotPurchased = note.includes('明確不採購') || note.includes('不採購');
       orders.push({
         id,
         companyName,
@@ -153,8 +155,8 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
         purchaseAmount,
         orderAmount,
         grossMargin,
-        note,
-        status: '已報價',
+        note: note.replace(/\s*明確不採購\s*/g, '').trim(),
+        status: isNotPurchased ? '未採購' : '已報價',
       });
     } else if (currentSection === 'signed_current' || currentSection === 'signed_other' || currentSection === 'signed_external') {
       // 入帳區: 企業抬頭, 入帳日期, 營業額, 總進價, 利潤, 毛利率, 備註
@@ -213,22 +215,28 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
     }
   }
 
-  // Compute amounts per funnel stage from orders
+  // Remaining '已報價' that weren't matched to 入帳/未入帳/未採購 → '跟進中'
+  for (const o of orders) {
+    if (o.status === '已報價') {
+      o.status = '跟進中';
+    }
+  }
+
+  // Compute amounts per funnel stage from actual order statuses
   const allAmount = orders.reduce((s, o) => s + o.orderAmount, 0);
   const closedAmount = orders.filter((o) => o.status === '已入帳' || o.status === '未入帳').reduce((s, o) => s + o.orderAmount, 0);
-  // 未採購 = still 已報價 orders that didn't convert (approximate: last N by notPurchased count)
-  const stillQuoted = orders.filter((o) => o.status === '已報價');
-  const notPurchasedOrders = stillQuoted.slice(-(notPurchased || 0));
+  const followingOrders = orders.filter((o) => o.status === '跟進中');
+  const followingAmount = followingOrders.reduce((s, o) => s + o.orderAmount, 0);
+  const notPurchasedOrders = orders.filter((o) => o.status === '未採購');
   const notPurchasedAmount = notPurchasedOrders.reduce((s, o) => s + o.orderAmount, 0);
-  const followingAmount = stillQuoted.slice(0, stillQuoted.length - (notPurchased || 0)).reduce((s, o) => s + o.orderAmount, 0);
 
-  // Build funnel from sheet data
+  // Build funnel — use sheet counts if available, otherwise compute from orders
   const funnel: FunnelData[] = [
-    { stage: '已報價', count: quotedCount, amount: allAmount },
+    { stage: '已報價', count: quotedCount || orders.length, amount: allAmount },
     { stage: '新接觸', count: newContacts, amount: allAmount },
-    { stage: '跟進中', count: followingUp, amount: followingAmount },
-    { stage: '成交', count: closedCount, amount: closedAmount },
-    { stage: '未採購', count: notPurchased, amount: notPurchasedAmount },
+    { stage: '跟進中', count: followingUp || followingOrders.length, amount: followingAmount },
+    { stage: '成交', count: closedCount || orders.filter((o) => o.status === '已入帳' || o.status === '未入帳').length, amount: closedAmount },
+    { stage: '未採購', count: notPurchased || notPurchasedOrders.length, amount: notPurchasedAmount },
   ];
 
   // Build summary
