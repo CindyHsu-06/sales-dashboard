@@ -22,7 +22,7 @@ export default function MarginChart({ orders }: MarginChartProps) {
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-20} textAnchor="end" height={60} />
             <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => `${v}%`} />
-            <Tooltip formatter={(value: number) => [`${value}%`, '毛利率']} />
+            <Tooltip formatter={(value) => [`${value}%`, '毛利率']} />
             <ReferenceLine y={8} stroke="#ef4444" strokeDasharray="4 4" label={{ value: '8%', position: 'right', fill: '#ef4444', fontSize: 12 }} />
             <Bar dataKey="margin" radius={[4, 4, 0, 0]} maxBarSize={48}>
               {data.map((entry, i) => (
