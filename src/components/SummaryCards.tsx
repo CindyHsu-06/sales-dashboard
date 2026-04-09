@@ -18,12 +18,12 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((c) => (
-        <div key={c.label} className={`${c.bg} rounded-xl p-5 border border-slate-100`}>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xl">{c.icon}</span>
+        <div key={c.label} className={`${c.bg} rounded-xl px-5 py-3 border border-slate-100`}>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-lg">{c.icon}</span>
             <span className="text-sm text-slate-500 font-medium">{c.label}</span>
           </div>
-          <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
+          <p className={`text-xl font-bold ${c.color}`}>{c.value}</p>
           {c.label === '累計成交金額' && (
             <p className="text-xs text-slate-400 mt-1">月目標 {fmt(summary.target)}</p>
           )}
