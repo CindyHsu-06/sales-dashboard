@@ -107,6 +107,7 @@ export default function App() {
       funnel = stages.map((stage) => ({
         stage,
         count: allFunnels.reduce((sum, f) => sum + (f.find((d) => d.stage === stage)?.count ?? 0), 0),
+        amount: allFunnels.reduce((sum, f) => sum + (f.find((d) => d.stage === stage)?.amount ?? 0), 0),
       }));
     }
 

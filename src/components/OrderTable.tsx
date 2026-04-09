@@ -10,6 +10,7 @@ const tabs: { label: string; filter: (o: Order) => boolean }[] = [
   { label: '已成交', filter: (o) => o.status === '已入帳' || o.status === '未入帳' },
   { label: '已入帳', filter: (o) => o.status === '已入帳' },
   { label: '未入帳追蹤', filter: (o) => o.status === '未入帳' },
+  { label: '未採購', filter: (o) => o.status === '已報價' },
 ];
 
 const statusBadge: Record<OrderStatus, string> = {

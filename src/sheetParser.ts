@@ -213,13 +213,22 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
     }
   }
 
+  // Compute amounts per funnel stage from orders
+  const allAmount = orders.reduce((s, o) => s + o.orderAmount, 0);
+  const closedAmount = orders.filter((o) => o.status === '已入帳' || o.status === '未入帳').reduce((s, o) => s + o.orderAmount, 0);
+  // 未採購 = still 已報價 orders that didn't convert (approximate: last N by notPurchased count)
+  const stillQuoted = orders.filter((o) => o.status === '已報價');
+  const notPurchasedOrders = stillQuoted.slice(-(notPurchased || 0));
+  const notPurchasedAmount = notPurchasedOrders.reduce((s, o) => s + o.orderAmount, 0);
+  const followingAmount = stillQuoted.slice(0, stillQuoted.length - (notPurchased || 0)).reduce((s, o) => s + o.orderAmount, 0);
+
   // Build funnel from sheet data
   const funnel: FunnelData[] = [
-    { stage: '新接觸', count: newContacts },
-    { stage: '已報價', count: quotedCount },
-    { stage: '跟進中', count: followingUp },
-    { stage: '成交', count: closedCount },
-    { stage: '未採購', count: notPurchased },
+    { stage: '新接觸', count: newContacts, amount: allAmount },
+    { stage: '已報價', count: quotedCount, amount: allAmount },
+    { stage: '跟進中', count: followingUp, amount: followingAmount },
+    { stage: '成交', count: closedCount, amount: closedAmount },
+    { stage: '未採購', count: notPurchased, amount: notPurchasedAmount },
   ];
 
   // Build summary

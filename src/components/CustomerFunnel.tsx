@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { FunnelData } from '../types';
 
 interface CustomerFunnelProps {
@@ -12,9 +13,13 @@ const stageColors: Record<string, string> = {
   '未採購': 'bg-red-400',
 };
 
+const fmt = (n: number) =>
+  new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(n);
+
 export default function CustomerFunnel({ data }: CustomerFunnelProps) {
   const max = Math.max(...data.map((d) => d.count), 1);
   const total = data.reduce((sum, d) => sum + d.count, 0);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   return (
     <div className="bg-white rounded-xl p-6 border border-slate-200">
@@ -26,17 +31,30 @@ export default function CustomerFunnel({ data }: CustomerFunnelProps) {
         {data.map((d) => {
           const pct = (d.count / max) * 100;
           return (
-            <div key={d.stage} className="flex items-center gap-3">
+            <div
+              key={d.stage}
+              className="flex items-center gap-3 relative"
+              onMouseEnter={() => setHovered(d.stage)}
+              onMouseLeave={() => setHovered(null)}
+            >
               <span className="w-16 text-sm text-slate-600 text-right shrink-0">{d.stage}</span>
-              <div className="flex-1 bg-slate-100 rounded-full h-8 relative overflow-hidden">
+              <div className="flex-1 bg-slate-100 rounded-full h-8 relative overflow-hidden cursor-pointer">
                 <div
-                  className={`h-full rounded-full ${stageColors[d.stage]} transition-all duration-500`}
+                  className={`h-full rounded-full ${stageColors[d.stage]} transition-all duration-500 ${hovered === d.stage ? 'brightness-110' : ''}`}
                   style={{ width: `${pct}%` }}
                 />
                 <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-slate-700">
                   {d.count}
                 </span>
               </div>
+              {/* Tooltip */}
+              {hovered === d.stage && (
+                <div className="absolute left-20 -top-10 bg-slate-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-10 whitespace-nowrap">
+                  <p className="font-semibold">{d.stage}</p>
+                  <p>{d.count} 家 | 總金額 {fmt(d.amount)}</p>
+                  <div className="absolute left-6 top-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-slate-800" />
+                </div>
+              )}
             </div>
           );
         })}

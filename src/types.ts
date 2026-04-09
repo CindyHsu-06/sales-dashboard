@@ -30,6 +30,7 @@ export type FunnelStage = '新接觸' | '已報價' | '跟進中' | '成交' | '
 export interface FunnelData {
   stage: FunnelStage;
   count: number;
+  amount: number;
 }
 
 export interface MonthlySummary {
