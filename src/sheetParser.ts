@@ -143,10 +143,11 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
       const purchaseAmount = parseNTD(row[3]);
       const orderAmount = parseNTD(row[4]);
       const grossMargin = parsePercent(row[5]);
-      const note = row[6]?.trim() || '';
+      // 備註可能跨欄（col 6 和 col 7），合併檢查
+      const rawNote = [row[6], row[7]].filter(Boolean).map((s) => s.trim()).join(' ').trim();
+      const isNotPurchased = rawNote.includes('不採購');
+      const cleanNote = rawNote.replace(/\s*明確不採購\s*/g, '').replace(/\s*不採購\s*/g, '').trim();
 
-      // Determine initial status from 備註
-      const isNotPurchased = note.includes('明確不採購') || note.includes('不採購');
       orders.push({
         id,
         companyName,
@@ -155,7 +156,7 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
         purchaseAmount,
         orderAmount,
         grossMargin,
-        note: note.replace(/\s*明確不採購\s*/g, '').trim(),
+        note: cleanNote,
         status: isNotPurchased ? '未採購' : '已報價',
       });
     } else if (currentSection === 'signed_current' || currentSection === 'signed_other' || currentSection === 'signed_external') {
