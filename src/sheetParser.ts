@@ -84,8 +84,44 @@ export interface SheetData {
   summary: MonthlySummary;
 }
 
+/** Split CSV text into rows, handling quoted fields that contain newlines */
+function splitCSVRows(csv: string): string[] {
+  const rows: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < csv.length; i++) {
+    const ch = csv[i];
+    if (inQuotes) {
+      if (ch === '"' && csv[i + 1] === '"') {
+        current += '""';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+        current += ch;
+      } else {
+        // Replace newlines inside quoted fields with space
+        current += (ch === '\n' || ch === '\r') ? ' ' : ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+        current += ch;
+      } else if (ch === '\n') {
+        rows.push(current);
+        current = '';
+      } else if (ch === '\r') {
+        // skip \r
+      } else {
+        current += ch;
+      }
+    }
+  }
+  if (current.trim()) rows.push(current);
+  return rows;
+}
+
 export function parseSheetCSV(csv: string, year: number, month: number): SheetData {
-  const lines = csv.split('\n').map((l) => parseCSVLine(l));
+  const lines = splitCSVRows(csv).map((l) => parseCSVLine(l));
 
   // Extract funnel data from right-side columns (cols 8-12 in the header area)
   let newContacts = 0;
