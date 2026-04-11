@@ -137,13 +137,12 @@ export function computeSummary(orders: Order[], startDate: string, endDate: stri
 
   const achievementRate = target > 0 ? (totalDealAmount / target) * 100 : 0;
 
-  return { totalDealAmount, achievementRate, monthlyReceived, monthlyUnreceived, target };
+  return { totalDealAmount, achievementRate, monthlyReceived, monthlyUnreceived, target, dealCount: dealOrders.length };
 }
 
 export function computeFunnel(orders: Order[]): FunnelData[] {
   const uniqueCompanies = new Set(orders.map((o) => o.companyName));
   const quoted = new Set(orders.filter((o) => o.status === '已報價' || o.status === '已簽核').map((o) => o.companyName));
-  const signing = new Set(orders.filter((o) => o.status === '已簽核').map((o) => o.companyName));
   const deal = new Set(orders.filter((o) => o.status === '已入帳' || o.status === '未入帳').map((o) => o.companyName));
   // 未採購 = 曾報價但在此區間內沒有成交的公司
   const noDeal = new Set([...quoted].filter((c) => !deal.has(c)));
@@ -151,14 +150,12 @@ export function computeFunnel(orders: Order[]): FunnelData[] {
   const allAmount = orders.reduce((s, o) => s + o.orderAmount, 0);
   const quotedAmountSum = orders.filter((o) => o.status === '已報價' || o.status === '已簽核').reduce((s, o) => s + o.orderAmount, 0);
   const dealAmount = orders.filter((o) => o.status === '已入帳' || o.status === '未入帳').reduce((s, o) => s + o.orderAmount, 0);
-  const signingAmount = orders.filter((o) => o.status === '已簽核').reduce((s, o) => s + o.orderAmount, 0);
   const noDealOrders = orders.filter((o) => noDeal.has(o.companyName));
   const noDealAmount = noDealOrders.reduce((s, o) => s + o.orderAmount, 0);
 
   return [
-    { stage: '已報價', count: quoted.size + deal.size, amount: quotedAmountSum + dealAmount },
     { stage: '新接觸', count: uniqueCompanies.size, amount: allAmount },
-    { stage: '跟進中', count: signing.size + deal.size, amount: signingAmount + dealAmount },
+    { stage: '已報價', count: quoted.size + deal.size, amount: quotedAmountSum + dealAmount },
     { stage: '成交', count: deal.size, amount: dealAmount },
     { stage: '未採購', count: noDeal.size, amount: noDealAmount },
   ];

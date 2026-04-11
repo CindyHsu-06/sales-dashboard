@@ -1,7 +1,5 @@
 export type OrderStatus = '已報價' | '已簽核' | '跟進中' | '未採購' | '已入帳' | '未入帳';
 
-export type FollowUpStatus = '待跟進' | '跟進中' | '已回覆' | '待結案';
-
 export interface Order {
   id: string;
   companyName: string;       // 企業名稱
@@ -14,18 +12,27 @@ export interface Order {
   status: OrderStatus;       // 狀態
 }
 
+export interface FollowUpNote {
+  date: string;              // e.g. "2026/3/24"
+  content: string;           // 紀錄內容
+}
+
 export interface FollowUpItem {
   id: string;
   companyName: string;
-  quoteDate: string;
-  quoteAmount: number;
-  expectedCloseDate: string; // 預計結案日
-  followUpStatus: FollowUpStatus;
-  lastContactDate: string;
-  note: string;
+  contact: string;           // 聯絡人
+  phone: string;             // 電話
+  email: string;             // 電子郵件
+  status: string;            // 狀態 e.g. "(階段二)跟催第二次"
+  quoteDate: string;         // 進單日 (YYYY-MM-DD)
+  lineId: string;            // LINE ID 名稱
+  lastModified: string;      // 最後異動時間 (YYYY-MM-DD)
+  taxId: string;             // 統編
+  orderDetailUrl: string;    // 訂單明細連結
+  notes: FollowUpNote[];     // 跟進紀錄
 }
 
-export type FunnelStage = '新接觸' | '已報價' | '跟進中' | '成交' | '未採購';
+export type FunnelStage = '新接觸' | '已報價' | '成交' | '未採購';
 
 export interface FunnelData {
   stage: FunnelStage;
@@ -39,4 +46,5 @@ export interface MonthlySummary {
   monthlyReceived: number;    // 本月入帳
   monthlyUnreceived: number;  // 未入帳金額
   target: number;             // 月目標
+  dealCount: number;          // 成交筆數
 }

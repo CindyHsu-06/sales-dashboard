@@ -8,9 +8,9 @@ import FollowUpList from './components/FollowUpList';
 import { fetchSheetCSV, parseSheetCSV } from './sheetParser';
 import type { SheetData } from './sheetParser';
 import { SHEET_URLS } from './sheets';
+import { fetchFollowUpItems } from './trackParser';
 import {
   getFilteredOrders,
-  getFilteredFollowUps,
   computeSummary,
   computeFunnel,
 } from './mockData';
@@ -41,6 +41,18 @@ export default function App() {
   const [sheetData, setSheetData] = useState<Record<string, SheetData>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [followUps, setFollowUps] = useState<FollowUpItem[]>([]);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+
+  // Fetch follow-up items from Notion MD files
+  useEffect(() => {
+    setFollowUpLoading(true);
+    const basePath = import.meta.env.BASE_URL;
+    fetchFollowUpItems(basePath)
+      .then(setFollowUps)
+      .catch(() => setFollowUps([]))
+      .finally(() => setFollowUpLoading(false));
+  }, []);
 
   const fetchData = useCallback(async (start: string, end: string) => {
     const months = getSheetMonths(start, end);
@@ -79,7 +91,6 @@ export default function App() {
   let orders: Order[];
   let funnel: FunnelData[];
   let summary: MonthlySummary;
-  let followUps: FollowUpItem[];
 
   if (hasSheetData) {
     // Collect all orders from sheet data within range
@@ -103,7 +114,7 @@ export default function App() {
       funnel = allFunnels[0];
     } else {
       // Aggregate funnel counts
-      const stages = ['已報價', '新接觸', '跟進中', '成交', '未採購'] as const;
+      const stages = ['新接觸', '已報價', '成交', '未採購'] as const;
       funnel = stages.map((stage) => ({
         stage,
         count: allFunnels.reduce((sum, f) => sum + (f.find((d) => d.stage === stage)?.count ?? 0), 0),
@@ -119,20 +130,37 @@ export default function App() {
         monthlyReceived: acc.monthlyReceived + s.monthlyReceived,
         monthlyUnreceived: acc.monthlyUnreceived + s.monthlyUnreceived,
         target: acc.target + s.target,
+        dealCount: acc.dealCount + s.dealCount,
       }),
-      { totalDealAmount: 0, achievementRate: 0, monthlyReceived: 0, monthlyUnreceived: 0, target: 0 },
+      { totalDealAmount: 0, achievementRate: 0, monthlyReceived: 0, monthlyUnreceived: 0, target: 0, dealCount: 0 },
     );
     summary.achievementRate = summary.target > 0 ? (summary.totalDealAmount / summary.target) * 100 : 0;
-
-    // No follow-ups from sheet for now (will come from Notion later)
-    followUps = getFilteredFollowUps(startDate, endDate);
   } else {
     // Fallback to mock data
     orders = getFilteredOrders(startDate, endDate);
-    followUps = getFilteredFollowUps(startDate, endDate);
     funnel = computeFunnel(orders);
     summary = computeSummary(orders, startDate, endDate);
   }
+
+  // Merge: Notion MD follow-ups + orders with status '跟進中' (avoid duplicates)
+  const followUpCompanies = new Set(followUps.map((f) => f.companyName));
+  const ordersFollowUp: FollowUpItem[] = orders
+    .filter((o) => o.status === '跟進中' && !followUpCompanies.has(o.companyName))
+    .map((o) => ({
+      id: o.id,
+      companyName: o.companyName,
+      contact: '',
+      phone: '',
+      email: '',
+      status: '跟進中',
+      quoteDate: o.quoteDate,
+      lineId: '',
+      lastModified: o.quoteDate,
+      taxId: '',
+      orderDetailUrl: '',
+      notes: [],
+    }));
+  const mergedFollowUps = [...followUps, ...ordersFollowUp];
 
   const handleDateChange = (start: string, end: string) => {
     setStartDate(start);
@@ -172,7 +200,7 @@ export default function App() {
 
         <OrderTable orders={orders} />
 
-        <FollowUpList items={followUps} />
+        <FollowUpList items={mergedFollowUps} loading={followUpLoading} />
       </main>
     </div>
   );

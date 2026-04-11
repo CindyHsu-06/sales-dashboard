@@ -126,7 +126,6 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
   // Extract funnel data from right-side columns (cols 8-12 in the header area)
   let newContacts = 0;
   let quotedCount = 0;
-  let followingUp = 0;
   let closedCount = 0;
   let notPurchased = 0;
   let totalDealAmount = 0;
@@ -141,7 +140,6 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
     if (row[8] && /^\d+$/.test(row[8].trim())) {
       newContacts = parseInt(row[8]);
       quotedCount = parseInt(row[9]) || 0;
-      followingUp = parseInt(row[10]) || 0;
       closedCount = parseInt(row[11]) || 0;
       notPurchased = parseInt(row[12]) || 0;
     }
@@ -262,16 +260,13 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
   // Compute amounts per funnel stage from actual order statuses
   const allAmount = orders.reduce((s, o) => s + o.orderAmount, 0);
   const closedAmount = orders.filter((o) => o.status === '已入帳' || o.status === '未入帳').reduce((s, o) => s + o.orderAmount, 0);
-  const followingOrders = orders.filter((o) => o.status === '跟進中');
-  const followingAmount = followingOrders.reduce((s, o) => s + o.orderAmount, 0);
   const notPurchasedOrders = orders.filter((o) => o.status === '未採購');
   const notPurchasedAmount = notPurchasedOrders.reduce((s, o) => s + o.orderAmount, 0);
 
   // Build funnel — use sheet counts if available, otherwise compute from orders
   const funnel: FunnelData[] = [
-    { stage: '已報價', count: quotedCount || orders.length, amount: allAmount },
     { stage: '新接觸', count: newContacts, amount: allAmount },
-    { stage: '跟進中', count: followingUp || followingOrders.length, amount: followingAmount },
+    { stage: '已報價', count: quotedCount || orders.length, amount: allAmount },
     { stage: '成交', count: closedCount || orders.filter((o) => o.status === '已入帳' || o.status === '未入帳').length, amount: closedAmount },
     { stage: '未採購', count: notPurchased || notPurchasedOrders.length, amount: notPurchasedAmount },
   ];
@@ -282,12 +277,14 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
   const monthlyReceived = receivedOrders.reduce((s, o) => s + o.orderAmount, 0);
   const monthlyUnreceived = unreceivedOrders.reduce((s, o) => s + o.orderAmount, 0);
 
+  const dealOrderCount = receivedOrders.length + unreceivedOrders.length;
   const summary: MonthlySummary = {
     totalDealAmount: totalDealAmount || monthlyReceived + monthlyUnreceived,
     achievementRate: totalQuotedAmount > 0 ? ((totalDealAmount || monthlyReceived) / totalQuotedAmount) * 100 : 0,
     monthlyReceived,
     monthlyUnreceived,
     target: totalQuotedAmount,
+    dealCount: dealOrderCount,
   };
 
   return { orders, funnel, summary };
