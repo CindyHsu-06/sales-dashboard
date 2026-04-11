@@ -1,4 +1,4 @@
-import type { Order, FollowUpItem, FunnelData, MonthlySummary } from './types';
+import type { Order, FunnelData, MonthlySummary } from './types';
 
 function makeOrder(
   id: string,
@@ -82,19 +82,6 @@ const allOrders: Order[] = [
   makeOrder('O-202604-006', '富邦金控', '2026-04-02', 135000, 148000, 1800, '分行設備更新', '已入帳'),
 ];
 
-const allFollowUps: FollowUpItem[] = [
-  { id: 'F-11-1', companyName: '國泰人壽', quoteDate: '2025-11-18', quoteAmount: 58000, expectedCloseDate: '2025-12-18', followUpStatus: '待跟進', lastContactDate: '2025-11-25', note: '預算審核中' },
-  { id: 'F-12-1', companyName: '遠傳電信', quoteDate: '2025-12-12', quoteAmount: 75000, expectedCloseDate: '2026-01-12', followUpStatus: '已回覆', lastContactDate: '2025-12-20', note: '需調整規格' },
-  { id: 'F-12-2', companyName: '緯創資通', quoteDate: '2025-12-22', quoteAmount: 195000, expectedCloseDate: '2026-01-20', followUpStatus: '跟進中', lastContactDate: '2025-12-28', note: '窗口休假中' },
-  { id: 'F-01-1', companyName: '中華電信', quoteDate: '2026-01-15', quoteAmount: 105000, expectedCloseDate: '2026-02-15', followUpStatus: '跟進中', lastContactDate: '2026-01-28', note: '等待內部簽核' },
-  { id: 'F-01-2', companyName: '廣達電腦', quoteDate: '2026-01-25', quoteAmount: 340000, expectedCloseDate: '2026-02-28', followUpStatus: '待跟進', lastContactDate: '2026-01-25', note: '報價已送出，待回覆' },
-  { id: 'F-02-1', companyName: '遠傳電信', quoteDate: '2026-02-14', quoteAmount: 82000, expectedCloseDate: '2026-03-15', followUpStatus: '已回覆', lastContactDate: '2026-02-25', note: '需調整規格' },
-  { id: 'F-02-2', companyName: '緯創資通', quoteDate: '2026-02-24', quoteAmount: 228000, expectedCloseDate: '2026-03-20', followUpStatus: '跟進中', lastContactDate: '2026-02-28', note: '窗口出差中' },
-  { id: 'F-03-1', companyName: '聯發科技', quoteDate: '2026-03-12', quoteAmount: 410000, expectedCloseDate: '2026-04-10', followUpStatus: '跟進中', lastContactDate: '2026-03-25', note: '預算審核中' },
-  { id: 'F-03-2', companyName: '仁寶電腦', quoteDate: '2026-03-22', quoteAmount: 310000, expectedCloseDate: '2026-04-15', followUpStatus: '待跟進', lastContactDate: '2026-03-22', note: '初次報價' },
-  { id: 'F-04-1', companyName: '鴻海精密', quoteDate: '2026-04-05', quoteAmount: 315000, expectedCloseDate: '2026-05-05', followUpStatus: '待跟進', lastContactDate: '2026-04-05', note: '等待窗口確認規格' },
-  { id: 'F-04-2', companyName: '聯發科技', quoteDate: '2026-04-09', quoteAmount: 560000, expectedCloseDate: '2026-05-10', followUpStatus: '跟進中', lastContactDate: '2026-04-09', note: '5G 專案評估中' },
-];
 
 // Monthly targets for achievement rate calculation
 const monthlyTargets: Record<string, number> = {
@@ -110,10 +97,6 @@ const monthlyTargets: Record<string, number> = {
 
 export function getFilteredOrders(startDate: string, endDate: string): Order[] {
   return allOrders.filter((o) => o.quoteDate >= startDate && o.quoteDate <= endDate);
-}
-
-export function getFilteredFollowUps(startDate: string, endDate: string): FollowUpItem[] {
-  return allFollowUps.filter((f) => f.quoteDate >= startDate && f.quoteDate <= endDate);
 }
 
 export function computeSummary(orders: Order[], startDate: string, endDate: string): MonthlySummary {
