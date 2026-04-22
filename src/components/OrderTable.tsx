@@ -57,6 +57,7 @@ export default function OrderTable({ orders }: OrderTableProps) {
             <tr className="bg-slate-50 text-slate-500 text-left">
               <th className="px-4 py-3 font-medium">企業名稱</th>
               <th className="px-4 py-3 font-medium">報價日期</th>
+              <th className="px-4 py-3 font-medium">入帳日期</th>
               <th className="px-4 py-3 font-medium text-right">總進價</th>
               <th className="px-4 py-3 font-medium text-right">採購總金額</th>
               <th className="px-4 py-3 font-medium text-right">訂單總金額</th>
@@ -68,7 +69,7 @@ export default function OrderTable({ orders }: OrderTableProps) {
           <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                   此分類暫無資料
                 </td>
               </tr>
@@ -77,6 +78,7 @@ export default function OrderTable({ orders }: OrderTableProps) {
                 <tr key={o.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-800">{o.companyName}</td>
                   <td className="px-4 py-3 text-slate-500">{o.quoteDate}</td>
+                  <td className="px-4 py-3 text-slate-500">{o.entryDate || '-'}</td>
                   <td className="px-4 py-3 text-right text-slate-600">{fmt(o.totalCost)}</td>
                   <td className="px-4 py-3 text-right text-slate-600">{fmt(o.purchaseAmount)}</td>
                   <td className="px-4 py-3 text-right font-medium text-slate-800">{fmt(o.orderAmount)}</td>
@@ -97,6 +99,7 @@ export default function OrderTable({ orders }: OrderTableProps) {
             <tfoot>
               <tr className="bg-slate-50 border-t-2 border-slate-200 font-semibold text-sm">
                 <td className="px-4 py-3 text-slate-700">總計 ({filtered.length} 筆)</td>
+                <td className="px-4 py-3" />
                 <td className="px-4 py-3" />
                 <td className="px-4 py-3 text-right text-slate-700">{fmt(filtered.reduce((s, o) => s + o.totalCost, 0))}</td>
                 <td className="px-4 py-3 text-right text-slate-700">{fmt(filtered.reduce((s, o) => s + o.purchaseAmount, 0))}</td>

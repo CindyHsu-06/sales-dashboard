@@ -78,10 +78,19 @@ function isDataRow(row: string[]): boolean {
   return /\d+月\d+日/.test(date);
 }
 
+// Cross-month status updates: orders from other months that got resolved in this month
+export interface CrossMonthUpdate {
+  companyName: string;
+  newStatus: '已入帳' | '未入帳';
+  entryDate: string;       // 入帳/簽核日期
+  sourceMonth: string;     // which month this update comes from (e.g. "2026-04")
+}
+
 export interface SheetData {
   orders: Order[];
   funnel: FunnelData[];
   summary: MonthlySummary;
+  crossMonthUpdates: CrossMonthUpdate[];
 }
 
 /** Split CSV text into rows, handling quoted fields that contain newlines */
@@ -123,7 +132,7 @@ function splitCSVRows(csv: string): string[] {
 export function parseSheetCSV(csv: string, year: number, month: number): SheetData {
   const lines = splitCSVRows(csv).map((l) => parseCSVLine(l));
 
-  // Extract funnel data from right-side columns (cols 8-12 in the header area)
+  // Extract funnel data from right-side columns (cols 9-13 after B/C split)
   let newContacts = 0;
   let quotedCount = 0;
   let closedCount = 0;
@@ -132,27 +141,25 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
   let totalQuotedAmount = 0;
 
   for (const row of lines) {
-    // Right side stats - look for the cells with numbers next to labels
-    if (row[8]?.includes('當前新接觸企業數')) {
-      // The numbers are on the same row in col 8-12 for header, but values are in next cols
-      // Actually looking at the CSV, the counts are on the first data row (row with 國統)
+    // Stats row: first data row has numeric values in cols 9-13
+    if (row[9] && /^\d+$/.test(row[9].trim())) {
+      newContacts = parseInt(row[9]);
+      quotedCount = parseInt(row[10]) || 0;
+      closedCount = parseInt(row[12]) || 0;
+      notPurchased = parseInt(row[13]) || 0;
     }
-    if (row[8] && /^\d+$/.test(row[8].trim())) {
-      newContacts = parseInt(row[8]);
-      quotedCount = parseInt(row[9]) || 0;
-      closedCount = parseInt(row[11]) || 0;
-      notPurchased = parseInt(row[12]) || 0;
+    if (row[9]?.includes('當前累計成交金額') || row[9]?.includes('本月累計成交金額')) {
+      totalDealAmount = parseNTD(row[11] || '');
     }
-    if (row[8]?.includes('當前累計成交金額') || row[8]?.includes('本月累計成交金額')) {
-      totalDealAmount = parseNTD(row[10] || '');
-    }
-    if (row[8]?.includes('當前累計提報金額') || row[8]?.includes('本月累計提報金額')) {
-      totalQuotedAmount = parseNTD(row[10] || '');
+    if (row[9]?.includes('當前累計提報金額') || row[9]?.includes('本月累計提報金額')) {
+      totalQuotedAmount = parseNTD(row[11] || '');
     }
   }
 
   // Parse orders by section
   const orders: Order[] = [];
+  const crossMonthUpdates: CrossMonthUpdate[] = [];
+  const monthKey = `${year}-${String(month).padStart(2, '0')}`;
   let currentSection: string | null = null;
   let orderId = 0;
 
@@ -171,14 +178,14 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
     const companyName = row[0].trim();
 
     if (currentSection === 'quoted') {
-      // 本月已報價訂單: 企業抬頭, 諮詢日期, 總進價含稅, 採購總金額含稅, 訂單總金額, 毛利率, 備註
+      // 本月已報價訂單: 企業抬頭(0), 諮詢日期(1), [空](2), 總進價(3), 採購總金額(4), 訂單總金額(5), 毛利率(6), 備註(7,8)
       const quoteDate = parseSheetDate(row[1], year);
-      const totalCost = parseNTD(row[2]);
-      const purchaseAmount = parseNTD(row[3]);
-      const orderAmount = parseNTD(row[4]);
-      const grossMargin = parsePercent(row[5]);
-      // 備註可能跨欄（col 6 和 col 7），合併檢查
-      const rawNote = [row[6], row[7]].filter(Boolean).map((s) => s.trim()).join(' ').trim();
+      const totalCost = parseNTD(row[3]);
+      const purchaseAmount = parseNTD(row[4]);
+      const orderAmount = parseNTD(row[5]);
+      const grossMargin = parsePercent(row[6]);
+      // 備註可能跨欄（col 7 和 col 8），合併檢查
+      const rawNote = [row[7], row[8]].filter(Boolean).map((s) => s.trim()).join(' ').trim();
       const isNotPurchased = rawNote.includes('不採購');
       const cleanNote = rawNote.replace(/\s*明確不採購\s*/g, '').replace(/\s*不採購\s*/g, '').trim();
 
@@ -194,25 +201,36 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
         status: isNotPurchased ? '未採購' : '已報價',
       });
     } else if (currentSection === 'signed_current' || currentSection === 'signed_other' || currentSection === 'signed_external') {
-      // 入帳區: 企業抬頭, 入帳日期, 營業額, 總進價, 利潤, 毛利率, 備註
-      const entryDate = parseSheetDate(row[1], year);
-      const revenue = parseNTD(row[2]);
-      const totalCost = parseNTD(row[3]);
-      const grossMargin = parsePercent(row[5]);
-      const note = row[6]?.trim() || '';
+      // 入帳區: 企業抬頭(0), 諮詢日期(1), 入帳日期(2), 營業額(3), 總進價(4), 利潤(5), 毛利率(6), 備註(7)
+      const entryDate = parseSheetDate(row[2], year) || parseSheetDate(row[1], year); // 入帳日期優先，fallback 諮詢日期
+      const revenue = parseNTD(row[3]);
+      const totalCost = parseNTD(row[4]);
+      const grossMargin = parsePercent(row[6]);
+      const note = row[7]?.trim() || '';
 
       // Find matching quoted order and update its status
       const existingIdx = orders.findIndex(
         (o) => o.companyName === companyName && o.status === '已報價'
       );
+      const quoteDate = parseSheetDate(row[1], year); // 諮詢日期
       if (existingIdx >= 0) {
         orders[existingIdx].status = '已入帳';
+        orders[existingIdx].entryDate = entryDate;
       } else {
-        // Not from current month's quotes (非當月報價單 or 非本月簽核)
+        // Not from current month's quotes → cross-month update
+        if (currentSection === 'signed_other' || currentSection === 'signed_external') {
+          crossMonthUpdates.push({
+            companyName,
+            newStatus: '已入帳',
+            entryDate,
+            sourceMonth: monthKey,
+          });
+        }
         orders.push({
           id,
           companyName,
-          quoteDate: entryDate,
+          quoteDate: quoteDate || entryDate,
+          entryDate,
           totalCost,
           purchaseAmount: revenue,
           orderAmount: revenue,
@@ -222,23 +240,32 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
         });
       }
     } else if (currentSection === 'unreceived') {
-      // 未入帳: same structure as 入帳
-      const entryDate = parseSheetDate(row[1], year);
-      const revenue = parseNTD(row[2]);
-      const totalCost = parseNTD(row[3]);
-      const grossMargin = parsePercent(row[5]);
-      const note = row[6]?.trim() || '';
+      // 未入帳: 企業抬頭(0), 諮詢日期(1), 入帳日期(2), 營業額(3), 總進價(4), 利潤(5), 毛利率(6), 備註(7)
+      const entryDate = parseSheetDate(row[2], year) || parseSheetDate(row[1], year);
+      const revenue = parseNTD(row[3]);
+      const totalCost = parseNTD(row[4]);
+      const grossMargin = parsePercent(row[6]);
+      const note = row[7]?.trim() || '';
 
+      const quoteDate = parseSheetDate(row[1], year);
       const existingIdx = orders.findIndex(
         (o) => o.companyName === companyName && o.status === '已報價'
       );
       if (existingIdx >= 0) {
         orders[existingIdx].status = '未入帳';
+        orders[existingIdx].entryDate = entryDate;
       } else {
+        crossMonthUpdates.push({
+          companyName,
+          newStatus: '未入帳',
+          entryDate,
+          sourceMonth: monthKey,
+        });
         orders.push({
           id,
           companyName,
-          quoteDate: entryDate,
+          quoteDate: quoteDate || entryDate,
+          entryDate,
           totalCost,
           purchaseAmount: revenue,
           orderAmount: revenue,
@@ -287,7 +314,7 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
     dealCount: dealOrderCount,
   };
 
-  return { orders, funnel, summary };
+  return { orders, funnel, summary, crossMonthUpdates };
 }
 
 export async function fetchSheetCSV(csvUrl: string): Promise<string> {

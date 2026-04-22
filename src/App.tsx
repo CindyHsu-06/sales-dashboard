@@ -35,6 +35,45 @@ function getSheetMonths(start: string, end: string): string[] {
   return months;
 }
 
+// Apply cross-month status updates: if a later month's sheet says a company
+// is 已入帳/未入帳, update that company's status in earlier months' orders
+function applyCrossMonthUpdates(allData: Record<string, SheetData>): Record<string, SheetData> {
+  // Collect all cross-month updates from all months
+  const updates: { companyName: string; newStatus: '已入帳' | '未入帳'; sourceMonth: string }[] = [];
+  for (const data of Object.values(allData)) {
+    updates.push(...data.crossMonthUpdates);
+  }
+
+  if (updates.length === 0) return allData;
+
+  // Deep clone to avoid mutating cached data
+  const result: Record<string, SheetData> = {};
+  for (const [key, data] of Object.entries(allData)) {
+    result[key] = { ...data, orders: data.orders.map((o) => ({ ...o })) };
+  }
+
+  // Apply updates: for each cross-month update, find the matching order in other months
+  for (const update of updates) {
+    for (const [monthKey, data] of Object.entries(result)) {
+      if (monthKey === update.sourceMonth) continue; // skip the month that generated the update
+      for (const order of data.orders) {
+        if (order.companyName === update.companyName && order.status === '跟進中') {
+          order.status = update.newStatus;
+          order.entryDate = update.entryDate;
+          // Append entry month to note, e.g. "4月入帳"
+          const m = parseInt(update.sourceMonth.split('-')[1]);
+          const tag = `${m}月入帳`;
+          if (!order.note.includes(tag)) {
+            order.note = order.note ? `${order.note}；${tag}` : tag;
+          }
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
 export default function App() {
   const [startDate, setStartDate] = useState(defaultStart);
   const [endDate, setEndDate] = useState(defaultEnd);
@@ -54,9 +93,10 @@ export default function App() {
       .finally(() => setFollowUpLoading(false));
   }, []);
 
-  const fetchData = useCallback(async (start: string, end: string) => {
-    const months = getSheetMonths(start, end);
-    const toFetch = months.filter((m) => SHEET_URLS[m] && !sheetData[m]);
+  // Load ALL available months on mount so cross-month updates work
+  const fetchAllSheets = useCallback(async () => {
+    const allMonths = Object.keys(SHEET_URLS);
+    const toFetch = allMonths.filter((m) => !sheetData[m]);
 
     if (toFetch.length === 0) return;
 
@@ -81,12 +121,15 @@ export default function App() {
   }, [sheetData]);
 
   useEffect(() => {
-    fetchData(startDate, endDate);
-  }, [startDate, endDate, fetchData]);
+    fetchAllSheets();
+  }, [fetchAllSheets]);
+
+  // Apply cross-month updates across all loaded data
+  const syncedData = applyCrossMonthUpdates(sheetData);
 
   // Merge data: use Sheet data where available, mock data as fallback
   const months = getSheetMonths(startDate, endDate);
-  const hasSheetData = months.some((m) => sheetData[m]);
+  const hasSheetData = months.some((m) => syncedData[m]);
 
   let orders: Order[];
   let funnel: FunnelData[];
@@ -99,15 +142,19 @@ export default function App() {
     const allSummaries: MonthlySummary[] = [];
 
     for (const m of months) {
-      if (sheetData[m]) {
-        allSheetOrders.push(...sheetData[m].orders);
-        allFunnels.push(sheetData[m].funnel);
-        allSummaries.push(sheetData[m].summary);
+      if (syncedData[m]) {
+        allSheetOrders.push(...syncedData[m].orders);
+        allFunnels.push(syncedData[m].funnel);
+        allSummaries.push(syncedData[m].summary);
       }
     }
 
-    // Filter orders by exact date range
-    orders = allSheetOrders.filter((o) => o.quoteDate >= startDate && o.quoteDate <= endDate);
+    // Filter orders by date range: include if quoteDate OR entryDate falls within range
+    orders = allSheetOrders.filter((o) => {
+      const quoteInRange = o.quoteDate >= startDate && o.quoteDate <= endDate;
+      const entryInRange = o.entryDate ? o.entryDate >= startDate && o.entryDate <= endDate : false;
+      return quoteInRange || entryInRange;
+    });
 
     // If single month with sheet data, use its funnel directly; otherwise aggregate
     if (allFunnels.length === 1) {

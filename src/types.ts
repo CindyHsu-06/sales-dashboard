@@ -4,6 +4,7 @@ export interface Order {
   id: string;
   companyName: string;       // 企業名稱
   quoteDate: string;         // 報價日期 (YYYY-MM-DD)
+  entryDate?: string;        // 入帳日期 (YYYY-MM-DD)
   totalCost: number;         // 總進價（成本）
   purchaseAmount: number;    // 採購總金額
   orderAmount: number;       // 訂單總金額（含運費）
