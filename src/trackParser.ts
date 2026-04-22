@@ -102,10 +102,11 @@ export async function fetchFollowUpItems(basePath: string): Promise<FollowUpItem
   if (mdFiles.length === 0) {
     // Fallback: try known filenames
     const knownFiles = [
-      '大提企業有限公司 32814b7d8d588028aafee7d26180c7f0.md',
-      '寶鑫五金有限公司 32714b7d8d58807197e2cbe9cdedc74e.md',
-      '未來農場股份有限公司 32214b7d8d5880c2a5f2cf8b42bdbdec.md',
-      '灴鎰精密科技有限公司 32e14b7d8d58801e936ec67965c11130.md',
+      '大提企業有限公司.md',
+      '寶鑫五金有限公司.md',
+      '灴鎰精密科技有限公司.md',
+      '台北捐血中心.md',
+      '正碁國際股份有限公司.md',
     ];
     const items: FollowUpItem[] = [];
     for (const file of knownFiles) {

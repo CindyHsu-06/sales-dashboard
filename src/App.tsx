@@ -16,9 +16,9 @@ import {
 } from './mockData';
 import type { Order, FunnelData, MonthlySummary, FollowUpItem } from './types';
 
-// Default: March 2026 (our test month)
-const defaultStart = '2026-03-01';
-const defaultEnd = '2026-03-31';
+// Default: current month (April 2026)
+const defaultStart = '2026-04-01';
+const defaultEnd = '2026-04-30';
 
 // Figure out which months in the date range have a Sheet URL
 function getSheetMonths(start: string, end: string): string[] {
@@ -189,8 +189,24 @@ export default function App() {
     summary = computeSummary(orders, startDate, endDate);
   }
 
-  // Merge: Notion MD follow-ups + orders with status '跟進中' (avoid duplicates)
-  const followUpCompanies = new Set(followUps.map((f) => f.companyName));
+  // Build a map of company → latest order status (across all loaded months)
+  const companyStatusMap = new Map<string, string>();
+  for (const o of orders) {
+    companyStatusMap.set(o.companyName, o.status);
+  }
+
+  // Filter Notion MD follow-ups: remove companies that are no longer 跟進中
+  // (e.g. 已入帳, 未入帳, 未採購 → resolved, no need to follow up)
+  const activeFollowUps = followUps.filter((f) => {
+    // Skip items marked as 不採購 in Notion itself
+    if (f.status.includes('不採購')) return false;
+    const orderStatus = companyStatusMap.get(f.companyName);
+    if (!orderStatus) return true; // no matching order → keep in list
+    return orderStatus === '跟進中' || orderStatus === '已報價' || orderStatus === '已簽核';
+  });
+
+  // Add orders with status '跟進中' that aren't already in Notion follow-ups
+  const followUpCompanies = new Set(activeFollowUps.map((f) => f.companyName));
   const ordersFollowUp: FollowUpItem[] = orders
     .filter((o) => o.status === '跟進中' && !followUpCompanies.has(o.companyName))
     .map((o) => ({
@@ -207,7 +223,8 @@ export default function App() {
       orderDetailUrl: '',
       notes: [],
     }));
-  const mergedFollowUps = [...followUps, ...ordersFollowUp];
+  const mergedFollowUps = [...activeFollowUps, ...ordersFollowUp]
+    .filter((f) => f.quoteDate >= startDate && f.quoteDate <= endDate);
 
   const handleDateChange = (start: string, end: string) => {
     setStartDate(start);
@@ -247,7 +264,9 @@ export default function App() {
 
         <OrderTable orders={orders} />
 
-        <FollowUpList items={mergedFollowUps} loading={followUpLoading} />
+        {(mergedFollowUps.length > 0 || followUpLoading) && (
+          <FollowUpList items={mergedFollowUps} loading={followUpLoading} />
+        )}
       </main>
     </div>
   );
