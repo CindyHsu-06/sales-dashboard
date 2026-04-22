@@ -223,8 +223,10 @@ export default function App() {
       orderDetailUrl: '',
       notes: [],
     }));
+  // Show follow-ups where quoteDate is on or before the end of selected range
+  // (active follow-ups carry forward until resolved, but don't show future ones)
   const mergedFollowUps = [...activeFollowUps, ...ordersFollowUp]
-    .filter((f) => f.quoteDate >= startDate && f.quoteDate <= endDate);
+    .filter((f) => f.quoteDate <= endDate);
 
   const handleDateChange = (start: string, end: string) => {
     setStartDate(start);
