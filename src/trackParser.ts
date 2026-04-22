@@ -91,34 +91,25 @@ function parseMdFile(text: string, id: string): FollowUpItem {
 
 // Fetch the list of MD files from /track/ and parse them
 export async function fetchFollowUpItems(basePath: string): Promise<FollowUpItem[]> {
-  // Fetch the index page to discover files
-  const res = await fetch(`${basePath}track/`);
-  if (!res.ok) return [];
+  // Try to discover MD files from directory listing (works on local dev server)
+  let mdFiles: string[] = [];
+  try {
+    const res = await fetch(`${basePath}track/`);
+    if (res.ok) {
+      const html = await res.text();
+      mdFiles = [...html.matchAll(/href="([^"]+\.md)"/g)].map((m) => decodeURIComponent(m[1]));
+    }
+  } catch { /* directory listing not available */ }
 
-  const html = await res.text();
-  // Extract .md filenames from directory listing
-  const mdFiles = [...html.matchAll(/href="([^"]+\.md)"/g)].map((m) => decodeURIComponent(m[1]));
-
+  // Fallback to known filenames (for GitHub Pages / Vercel where directory listing is unavailable)
   if (mdFiles.length === 0) {
-    // Fallback: try known filenames
-    const knownFiles = [
+    mdFiles = [
       '大提企業有限公司.md',
       '寶鑫五金有限公司.md',
       '灴鎰精密科技有限公司.md',
       '台北捐血中心.md',
       '正碁國際股份有限公司.md',
     ];
-    const items: FollowUpItem[] = [];
-    for (const file of knownFiles) {
-      try {
-        const r = await fetch(`${basePath}track/${encodeURIComponent(file)}`);
-        if (r.ok) {
-          const text = await r.text();
-          items.push(parseMdFile(text, file));
-        }
-      } catch { /* skip */ }
-    }
-    return items;
   }
 
   const items: FollowUpItem[] = [];
@@ -128,7 +119,10 @@ export async function fetchFollowUpItems(basePath: string): Promise<FollowUpItem
         const r = await fetch(`${basePath}track/${encodeURIComponent(file)}`);
         if (r.ok) {
           const text = await r.text();
-          items.push(parseMdFile(text, file));
+          // Make sure we got actual MD content, not an HTML error page
+          if (!text.trimStart().startsWith('<!')) {
+            items.push(parseMdFile(text, file));
+          }
         }
       } catch { /* skip */ }
     })
