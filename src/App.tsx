@@ -39,7 +39,7 @@ function getSheetMonths(start: string, end: string): string[] {
 // is 已入帳/未入帳, update that company's status in earlier months' orders
 function applyCrossMonthUpdates(allData: Record<string, SheetData>): Record<string, SheetData> {
   // Collect all cross-month updates from all months
-  const updates: { companyName: string; newStatus: '已入帳' | '未入帳'; sourceMonth: string }[] = [];
+  const updates: { companyName: string; newStatus: '已入帳' | '未入帳'; entryDate: string; sourceMonth: string }[] = [];
   for (const data of Object.values(allData)) {
     updates.push(...data.crossMonthUpdates);
   }
