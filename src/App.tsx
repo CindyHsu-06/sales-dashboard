@@ -53,11 +53,15 @@ function applyCrossMonthUpdates(allData: Record<string, SheetData>): Record<stri
   }
 
   // Apply updates: for each cross-month update, find the matching order in other months
+  // Match '跟進中' (未成交) or '未入帳' (已成交待入帳) — these are the updatable states
   for (const update of updates) {
     for (const [monthKey, data] of Object.entries(result)) {
       if (monthKey === update.sourceMonth) continue; // skip the month that generated the update
       for (const order of data.orders) {
-        if (order.companyName === update.companyName && order.status === '跟進中') {
+        if (
+          order.companyName === update.companyName &&
+          (order.status === '跟進中' || order.status === '未入帳')
+        ) {
           order.status = update.newStatus;
           order.entryDate = update.entryDate;
           // Append entry month to note, e.g. "4月入帳"

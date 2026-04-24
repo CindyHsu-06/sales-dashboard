@@ -208,6 +208,17 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
       const grossMargin = parsePercent(row[6]);
       const note = row[7]?.trim() || '';
 
+      // 非本月簽核 本月入帳 → 業績算簽核當月，不計入本月 orders，只做跨月更新
+      if (currentSection === 'signed_external') {
+        crossMonthUpdates.push({
+          companyName,
+          newStatus: '已入帳',
+          entryDate,
+          sourceMonth: monthKey,
+        });
+        continue;
+      }
+
       // Find matching quoted order and update its status
       const existingIdx = orders.findIndex(
         (o) => o.companyName === companyName && o.status === '已報價'
@@ -217,8 +228,8 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
         orders[existingIdx].status = '已入帳';
         orders[existingIdx].entryDate = entryDate;
       } else {
-        // Not from current month's quotes → cross-month update
-        if (currentSection === 'signed_other' || currentSection === 'signed_external') {
+        // 本月簽核 非當月報價單 → 新增為本月 order，並做跨月更新（把更早月份的跟進中 → 已入帳）
+        if (currentSection === 'signed_other') {
           crossMonthUpdates.push({
             companyName,
             newStatus: '已入帳',
@@ -235,7 +246,7 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
           purchaseAmount: revenue,
           orderAmount: revenue,
           grossMargin,
-          note: note || (currentSection === 'signed_other' ? '非當月報價單' : '非本月簽核'),
+          note: note || (currentSection === 'signed_other' ? '非當月報價單' : ''),
           status: '已入帳',
         });
       }
