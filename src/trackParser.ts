@@ -107,7 +107,6 @@ export async function fetchFollowUpItems(basePath: string): Promise<FollowUpItem
       '寶鑫五金有限公司.md',
       '灴鎰精密科技有限公司.md',
       '台北捐血中心.md',
-      '正碁國際股份有限公司.md',
       '嚞承有限公司.md',
       '銉凱貿易.md',
       '台塑新智能科技股份有限公司.md',
