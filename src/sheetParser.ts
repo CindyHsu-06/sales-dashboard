@@ -61,8 +61,8 @@ function parseSheetDate(dateStr: string, year: number): string {
 function isSectionHeader(row: string[]): string | null {
   const first = row[0]?.trim();
   if (first === '本月已報價訂單') return 'quoted';
-  if (first?.startsWith('本月簽核') && first.includes('當月報價單')) return 'signed_current';
   if (first?.startsWith('本月簽核') && first.includes('非當月報價單')) return 'signed_other';
+  if (first?.startsWith('本月簽核') && first.includes('當月報價單')) return 'signed_current';
   if (first === '非本月簽核 本月入帳') return 'signed_external';
   if (first === '以下未入帳') return 'unreceived';
   return null;
