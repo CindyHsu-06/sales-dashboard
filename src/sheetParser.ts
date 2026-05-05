@@ -301,12 +301,12 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
   const notPurchasedOrders = orders.filter((o) => o.status === '未採購');
   const notPurchasedAmount = notPurchasedOrders.reduce((s, o) => s + o.orderAmount, 0);
 
-  // Build funnel — use sheet counts if available, otherwise compute from orders
+  // Status-based stages derive from orders so manual sheet counts can't desync after edits
   const funnel: FunnelData[] = [
     { stage: '新接觸', count: newContacts, amount: allAmount },
     { stage: '已報價', count: quotedCount || orders.length, amount: allAmount },
-    { stage: '成交', count: closedCount || orders.filter((o) => o.status === '已入帳' || o.status === '未入帳').length, amount: closedAmount },
-    { stage: '未採購', count: notPurchased || notPurchasedOrders.length, amount: notPurchasedAmount },
+    { stage: '成交', count: orders.filter((o) => o.status === '已入帳' || o.status === '未入帳').length, amount: closedAmount },
+    { stage: '未採購', count: notPurchasedOrders.length, amount: notPurchasedAmount },
   ];
 
   // Build summary
