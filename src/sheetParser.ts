@@ -135,8 +135,6 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
   // Extract funnel data from right-side columns (cols 9-13 after B/C split)
   let newContacts = 0;
   let quotedCount = 0;
-  let closedCount = 0;
-  let notPurchased = 0;
   let totalDealAmount = 0;
   let totalQuotedAmount = 0;
 
@@ -145,8 +143,6 @@ export function parseSheetCSV(csv: string, year: number, month: number): SheetDa
     if (row[9] && /^\d+$/.test(row[9].trim())) {
       newContacts = parseInt(row[9]);
       quotedCount = parseInt(row[10]) || 0;
-      closedCount = parseInt(row[12]) || 0;
-      notPurchased = parseInt(row[13]) || 0;
     }
     if (row[9]?.includes('當前累計成交金額') || row[9]?.includes('本月累計成交金額')) {
       totalDealAmount = parseNTD(row[11] || '');
