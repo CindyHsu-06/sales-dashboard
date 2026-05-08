@@ -31,4 +31,9 @@ export const SHEET_URLS: Record<string, { url: string; year: number; month: numb
     year: 2026,
     month: 4,
   },
+  '2026-05': {
+    url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRBJo5xWf8sQSIPrOhEhfk056pAwG78NntWwfcUfFY-fByQ8WXS43T8U8qnQQlOhQ/pub?gid=909931799&single=true&output=csv',
+    year: 2026,
+    month: 5,
+  },
 };
