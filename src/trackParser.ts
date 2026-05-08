@@ -106,9 +106,10 @@ export async function fetchFollowUpItems(basePath: string): Promise<FollowUpItem
     mdFiles = [
       '灴鎰精密科技有限公司.md',
       '台北捐血中心.md',
-      '嚞承有限公司.md',
       '銉凱貿易.md',
       '興勤電子工業股份有限公司楠梓分公司.md',
+      '勁澤科技股份有限公司.md',
+      '晶華國際酒店股份有限公司台南分公司.md',
     ];
   }
 
