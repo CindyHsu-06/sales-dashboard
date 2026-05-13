@@ -110,6 +110,9 @@ export async function fetchFollowUpItems(basePath: string): Promise<FollowUpItem
       '興勤電子工業股份有限公司楠梓分公司.md',
       '勁澤科技股份有限公司.md',
       '晶華國際酒店股份有限公司台南分公司.md',
+      '楊瑞豐.md',
+      '欣德信貿易有限公司.md',
+      '辛耘企業股份有限公司.md',
     ];
   }
 
