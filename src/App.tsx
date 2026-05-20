@@ -16,9 +16,19 @@ import {
 } from './mockData';
 import type { Order, FunnelData, MonthlySummary, FollowUpItem } from './types';
 
-// Default: current month (April 2026)
-const defaultStart = '2026-04-01';
-const defaultEnd = '2026-04-30';
+// Default to the current month, falling back to the latest month that has a Sheet URL
+function getDefaultMonth(): string {
+  const now = new Date();
+  const current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  if (SHEET_URLS[current]) return current;
+  const available = Object.keys(SHEET_URLS).sort();
+  return available[available.length - 1];
+}
+
+const defaultMonth = getDefaultMonth();
+const [defaultYear, defaultMonthNum] = defaultMonth.split('-').map(Number);
+const defaultStart = `${defaultMonth}-01`;
+const defaultEnd = `${defaultMonth}-${String(new Date(defaultYear, defaultMonthNum, 0).getDate()).padStart(2, '0')}`;
 
 // Figure out which months in the date range have a Sheet URL
 function getSheetMonths(start: string, end: string): string[] {
