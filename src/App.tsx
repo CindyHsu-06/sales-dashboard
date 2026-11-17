@@ -117,21 +117,23 @@ export default function App() {
     setLoading(true);
     setError(null);
 
-    try {
-      const results: Record<string, SheetData> = {};
-      await Promise.all(
-        toFetch.map(async (m) => {
-          const config = SHEET_URLS[m];
-          const csv = await fetchSheetCSV(config.url);
-          results[m] = parseSheetCSV(csv, config.year, config.month);
-        })
-      );
-      setSheetData((prev) => ({ ...prev, ...results }));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '載入資料失敗');
-    } finally {
-      setLoading(false);
-    }
+    const results: Record<string, SheetData> = {};
+    const failedMonths: string[] = [];
+
+    const outcomes = await Promise.allSettled(
+      toFetch.map(async (m) => {
+        const config = SHEET_URLS[m];
+        const csv = await fetchSheetCSV(config.url);
+        results[m] = parseSheetCSV(csv, config.year, config.month);
+      })
+    );
+    outcomes.forEach((outcome, i) => {
+      if (outcome.status === 'rejected') failedMonths.push(toFetch[i]);
+    });
+
+    setSheetData((prev) => ({ ...prev, ...results }));
+    setError(failedMonths.length > 0 ? `部分月份載入失敗（${failedMonths.join('、')}），可能是該月分頁的發布連結已失效` : null);
+    setLoading(false);
   }, [sheetData]);
 
   useEffect(() => {
