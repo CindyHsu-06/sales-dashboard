@@ -104,12 +104,7 @@ export async function fetchFollowUpItems(basePath: string): Promise<FollowUpItem
   // Fallback to known filenames (for GitHub Pages / Vercel where directory listing is unavailable)
   if (mdFiles.length === 0) {
     mdFiles = [
-      '灴鎰精密科技有限公司.md',
-      '台北捐血中心.md',
-      '銉凱貿易.md',
-      '興勤電子工業股份有限公司楠梓分公司.md',
-      '旻昇企業.md',
-      '至鴻科技股份有限公司.md',
+      '花蓮縣大禹國民小學.md',
     ];
   }
 
