@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Filter } from 'lucide-react';
 import type { FunnelData } from '../types';
 
 interface CustomerFunnelProps {
@@ -16,10 +17,10 @@ const stageDescriptions: Record<string, string> = {
 };
 
 const stageColors: Record<string, { text: string; gradient: string }> = {
-  '新接觸': { text: 'text-blue-600', gradient: 'from-blue-400 to-blue-600' },
-  '已報價': { text: 'text-cyan-600', gradient: 'from-cyan-400 to-cyan-600' },
-  '成交': { text: 'text-emerald-600', gradient: 'from-emerald-400 to-emerald-600' },
-  '未採購': { text: 'text-red-500', gradient: 'from-red-300 to-red-500' },
+  '新接觸': { text: 'text-brand-600', gradient: 'from-brand-500 to-brand-600' },
+  '已報價': { text: 'text-sky-600', gradient: 'from-sky-400 to-sky-500' },
+  '成交': { text: 'text-emerald-600', gradient: 'from-emerald-400 to-emerald-500' },
+  '未採購': { text: 'text-slate-500', gradient: 'from-slate-300 to-slate-400' },
 };
 
 const FUNNEL_STAGES = ['新接觸', '已報價', '成交'] as const;
@@ -44,11 +45,14 @@ export default function CustomerFunnel({ data }: CustomerFunnelProps) {
   const widths = stages.map((s) => Math.max((s.count / maxCount) * 100, 30));
 
   return (
-    <div className="bg-white rounded-xl p-6 border border-slate-200">
+    <div className="panel p-5">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-base font-semibold text-slate-800">客戶漏斗</h3>
+        <h3 className="flex items-center gap-2 text-base font-bold text-slate-800">
+          <Filter className="w-[18px] h-[18px] text-brand-500" />
+          客戶漏斗
+        </h3>
         <span className="text-sm text-slate-500">
-          總計 <span className="font-bold text-slate-800 text-lg">{total}</span> 家
+          總計 <span className="font-bold text-brand-600 text-lg">{total}</span> 家
         </span>
       </div>
 

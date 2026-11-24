@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { RefreshCw, AlertTriangle, Loader2 } from 'lucide-react';
 import DateRangePicker from './components/DateRangePicker';
 import SummaryCards from './components/SummaryCards';
 import CustomerFunnel from './components/CustomerFunnel';
@@ -96,6 +97,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [followUps, setFollowUps] = useState<FollowUpItem[]>([]);
   const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   // Fetch follow-up items from Notion MD files
   useEffect(() => {
@@ -134,6 +136,7 @@ export default function App() {
     setSheetData((prev) => ({ ...prev, ...results }));
     setError(failedMonths.length > 0 ? `部分月份載入失敗（${failedMonths.join('、')}），可能是該月分頁的發布連結已失效` : null);
     setLoading(false);
+    setLastUpdated(new Date().toLocaleTimeString('zh-TW', { hour12: false }));
   }, [sheetData]);
 
   useEffect(() => {
@@ -250,32 +253,58 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f5f6f8]">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-slate-800">企業採購 Dashboard</h1>
+      <header className="bg-white shadow-sm sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-pink-500 flex items-center justify-center text-white text-xl font-bold leading-none">
+                Y
+              </div>
+              <span className="text-lg font-bold text-slate-800 whitespace-nowrap">企業採購 Dashboard</span>
+            </div>
+            {/* Only surface status when something needs attention */}
             {loading && (
-              <span className="text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded-full animate-pulse">
-                載入中...
+              <span className="flex items-center gap-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                <Loader2 className="w-3 h-3 animate-spin" />載入中
               </span>
             )}
             {error && (
-              <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded-full">
-                {error}
+              <span className="flex items-center gap-1 text-xs text-red-700 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full truncate" title={error}>
+                <AlertTriangle className="w-3 h-3 shrink-0" />
+                <span className="truncate">{error}</span>
               </span>
             )}
           </div>
-          <DateRangePicker startDate={startDate} endDate={endDate} onChange={handleDateChange} />
+          <div className="flex items-center gap-3 shrink-0">
+            {lastUpdated && (
+              <span className="text-xs text-slate-400 hidden md:inline">上次更新：{lastUpdated}</span>
+            )}
+            <button
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold transition-colors"
+            >
+              重新整理
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Content */}
-      <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
-        <SummaryCards summary={summary} />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+        <h2 className="text-xl font-bold text-slate-800">銷售數據總覽</h2>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="panel p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h3 className="text-base font-bold text-slate-800">業績數據統計</h3>
+            <DateRangePicker startDate={startDate} endDate={endDate} onChange={handleDateChange} />
+          </div>
+          <SummaryCards summary={summary} />
+        </section>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <CustomerFunnel data={funnel} />
           <MarginChart orders={orders} />
         </div>

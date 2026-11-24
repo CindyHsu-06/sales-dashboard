@@ -154,7 +154,7 @@ export default function DateRangePicker({ startDate, endDate, onChange }: DateRa
         <button
           onClick={() => openPicker('start')}
           className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg text-sm font-medium transition-colors shadow-sm ${
-            selecting === 'start' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+            selecting === 'start' ? 'border-brand-500 ring-2 ring-brand-100' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
           }`}
         >
           <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -166,7 +166,7 @@ export default function DateRangePicker({ startDate, endDate, onChange }: DateRa
         <button
           onClick={() => openPicker('end')}
           className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg text-sm font-medium transition-colors shadow-sm ${
-            selecting === 'end' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+            selecting === 'end' ? 'border-brand-500 ring-2 ring-brand-100' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
           }`}
         >
           {displayDate(endDate)}
@@ -188,7 +188,7 @@ export default function DateRangePicker({ startDate, endDate, onChange }: DateRa
               <button
                 key={q.key}
                 onClick={() => handleQuick(q.key)}
-                className="text-left px-2 py-1.5 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors"
+                className="text-left px-2 py-1.5 text-sm text-slate-600 hover:bg-brand-50 hover:text-brand-600 rounded-md transition-colors"
               >
                 {q.label}
               </button>
@@ -235,9 +235,9 @@ export default function DateRangePicker({ startDate, endDate, onChange }: DateRa
                     onClick={() => handleDayClick(d)}
                     className={`h-8 text-sm rounded-md transition-colors relative ${
                       isStart || isEnd
-                        ? 'bg-blue-600 text-white font-semibold'
+                        ? 'bg-brand-600 text-white font-semibold'
                         : inRange
-                          ? 'bg-blue-50 text-blue-700'
+                          ? 'bg-brand-50 text-brand-700'
                           : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >

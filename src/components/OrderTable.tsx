@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ClipboardList } from 'lucide-react';
 import type { Order, OrderStatus } from '../types';
 
 interface OrderTableProps {
@@ -15,8 +16,8 @@ const tabs: { label: string; filter: (o: Order) => boolean }[] = [
 ];
 
 const statusBadge: Record<OrderStatus, string> = {
-  '已報價': 'bg-blue-100 text-blue-700',
-  '已簽核': 'bg-cyan-100 text-cyan-700',
+  '已報價': 'bg-brand-100 text-brand-700',
+  '已簽核': 'bg-sky-100 text-sky-700',
   '跟進中': 'bg-amber-100 text-amber-700',
   '未採購': 'bg-slate-100 text-slate-600',
   '已入帳': 'bg-emerald-100 text-emerald-700',
@@ -31,30 +32,34 @@ export default function OrderTable({ orders }: OrderTableProps) {
   const filtered = orders.filter(tabs[activeTab].filter);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-      <div className="flex border-b border-slate-200">
+    <div className="panel p-5">
+      <h3 className="flex items-center gap-2 text-base font-bold text-slate-800 mb-4">
+        <ClipboardList className="w-[18px] h-[18px] text-brand-500" />
+        訂單列表
+      </h3>
+
+      {/* Segmented tabs */}
+      <div className="grid grid-cols-3 md:grid-cols-6 border border-slate-200 rounded-lg overflow-hidden mb-4">
         {tabs.map((t, i) => (
           <button
             key={t.label}
             onClick={() => setActiveTab(i)}
-            className={`px-5 py-3 text-sm font-medium transition-colors ${
+            className={`px-3 py-2.5 text-xs sm:text-sm font-bold transition-colors border-slate-200 [&:not(:last-child)]:border-r ${
               i === activeTab
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
-                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                ? 'bg-brand-500 text-white'
+                : 'text-slate-600 hover:bg-brand-50 hover:text-brand-600'
             }`}
           >
             {t.label}
-            <span className="ml-1.5 text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full">
-              {orders.filter(t.filter).length}
-            </span>
+            <span className="ml-1.5 tabular-nums">{orders.filter(t.filter).length}</span>
           </button>
         ))}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto border border-slate-200 rounded-lg">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50 text-slate-500 text-left">
+            <tr className="bg-slate-50 text-slate-500 text-left border-b border-slate-200">
               <th className="px-4 py-3 font-medium">企業名稱</th>
               <th className="px-4 py-3 font-medium">報價日期</th>
               <th className="px-4 py-3 font-medium">入帳日期</th>
@@ -86,7 +91,7 @@ export default function OrderTable({ orders }: OrderTableProps) {
                     {pct(o.grossMargin)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge[o.status]}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap ${statusBadge[o.status]}`}>
                       {o.status}
                     </span>
                   </td>

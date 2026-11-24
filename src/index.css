@@ -1,8 +1,26 @@
 @import "tailwindcss";
 
+/* Brand tokens — matches the company's internal tool (indigo primary) */
+@theme {
+  --color-brand-50: #eef0ff;
+  --color-brand-100: #e0e3ff;
+  --color-brand-200: #c5caff;
+  --color-brand-500: #5b5ff0;
+  --color-brand-600: #4b4fe0;
+  --color-brand-700: #3d40c2;
+  --font-sans: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+}
+
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: #f1f5f9;
+  font-family: var(--font-sans);
+  background: #f5f6f8;
   color: #1e293b;
+}
+
+/* Shared white section card */
+@utility panel {
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.06), 0 1px 2px rgb(15 23 42 / 0.04);
 }
